@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import Board from "./board";
+import App from "./App";
 
 
 const rootElement = document.getElementById("root");
-ReactDOM.render(<Board />, rootElement);
+ReactDOM.render(<App />, rootElement);
 
