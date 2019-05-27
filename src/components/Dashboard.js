@@ -1,6 +1,8 @@
 import React, {useEffect, useState} from 'react'
 import Navbar from './Navbar'
 import firebase from '../firebase'
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom'
+
 
 const Dashboard = (props) => {
   const [recommendations, setrecommendations] = useState([])
@@ -8,19 +10,30 @@ const Dashboard = (props) => {
   const [category, setcategory] = useState("")
   const [recommendation, setrecommendation] = useState("")
   const [loading, setloading] = useState(false)
+  const [authors, setauthors] = useState({})
 
   useEffect(() => {
-    firebase.getRecommendations().then(recommendations => {
+    let tempAuthors = {}
+
+    firebase.getAuthors().then(results => {
+
+      results.forEach(doc => {
+        tempAuthors[doc.data().uid] = doc.data().username
+      })
+      setauthors(tempAuthors)
+      firebase.getRecommendations().then(recommendations => {
         let newReviews = []
         recommendations.forEach(recommendation => {
           newReviews.push({
             id: recommendation.id,
-            data: recommendation.data().recommendation 
+            data: recommendation.data().recommendation
           })
         })
-          setrecommendations(newReviews)
-          setloading(false)
+        setrecommendations(newReviews)
+        setloading(false)
       })
+      firebase.addAuthor()
+    })
   }, [loading])
 
 if (!firebase.getCurrentUsername()){
@@ -32,7 +45,10 @@ if (!firebase.getCurrentUsername()){
 
   async function addRecommendation() {
     try {
-      await firebase.addRecommendation({title, category, recommendation})
+      await firebase.addRecommendation({title,
+         category, 
+         recommendation, 
+         author: firebase.auth.currentUser.uid})
       setcategory("");
       settitle("");
       setrecommendation("");
@@ -40,6 +56,12 @@ if (!firebase.getCurrentUsername()){
     } catch (error) {
       alert(error.message)
     }
+  }
+
+  async function deleteRecommendation(e, id){
+    e.preventDefault()
+    await firebase.deleteRecommendation(id);
+    setloading(true);
   }
 
   return (
@@ -68,12 +90,31 @@ if (!firebase.getCurrentUsername()){
                   {recommendation.data.category}
                 </a>
                 <a
-                  href="/deleteRecommendation"
+                  href={`/author/${recommendation.data.author}`}
                   className="card-footer-item"
-                  onClick={e => console.log(e, recommendation.id)}
                 >
-                  Delete
+                  {authors[recommendation.data.author]}
                 </a>
+                {(firebase.auth.currentUser.uid == recommendation.data.author) ? (
+                <Link
+                  to={`/editRecommendation/${recommendation.id}`}
+                  className="card-footer-item"
+                >
+                  Edit
+                </Link>
+                ) : (
+                   ''
+                )}
+                {(firebase.auth.currentUser.uid == recommendation.data.author) ? (
+                  <a
+                    href="/deleteRecommendation"
+                    className="card-footer-item"
+                    onClick={e => deleteRecommendation(e, recommendation.id)}
+                  >
+                    Delete
+                </a>
+                )  : ( ''
+                )}
               </footer>
             </div>            
           ))}
@@ -91,13 +132,20 @@ if (!firebase.getCurrentUsername()){
               onChange={e => settitle(e.target.value)}
             />
 
-            <input
-              placeholder="category"
-              type="text"
+            <select
               value={category}
               aria-label="category"
               onChange={e => setcategory(e.target.value)}
-            />
+            >
+              <option value="">Please Select ...</option>
+              <option value="Show">Show (TV/Netflix/Hulu/etc)</option>
+              <option value="Book">Book</option>
+              <option value="Movie">Movie</option>
+              <option value="Podcast">Podcast</option>
+              <option value="SubReddit">SubReddit</option>
+              <option value="Youtube Channel">Youtube Channel</option>
+              <option value="Website">Website (generic link)</option>
+            </select>
 
             <input
               placeholder="recommendation"

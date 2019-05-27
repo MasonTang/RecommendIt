@@ -49,7 +49,28 @@ class Firebase {
         return recommendations;
     }
 
-    async addRecommendation(recommendation) {
+    async getRecommendationsByCategory(category) {
+        const recommendations = await this.db
+        .collection('recommendations')
+        .where("recommendation.category", "==", category)
+        .get()
+        return recommendations;
+    }
+
+    async getRecommendationsByAuthor(author) {
+        const recommendations = await this.db
+            .collection('recommendations')
+            .where("recommendation.author", "==", author)
+            .get()
+        return recommendations;
+    }
+
+    async getRecommendation(id) {
+        const recommendation = await this.db.collection('recommendations').doc(id).get()
+        return recommendation;
+    }
+
+    addRecommendation(recommendation) {
         if(!this.auth.currentUser){
             return alert("Not authorized")
         }
@@ -57,6 +78,46 @@ class Firebase {
         return this.db.collection("recommendations").add({
             recommendation
         })
+    }
+
+    updateRecommendation(id, recommendation) {
+        if(!this.auth.currentUser) {
+            return alert('Not authorized')
+        }
+
+        return this.db.collection("recommendations").doc(id).update({
+            recommendation
+        })
+    }
+
+    deleteRecommendation(id){
+        return this.db.collection('recommendations')
+        .doc(id)
+        .delete()
+    }
+
+    async addAuthor() {
+        const author = await this.db
+            .collection("authors")
+            .where("uid", "==", this.auth.currentUser.uid)
+            .get()
+        let count = 0;
+        author.forEach(val => {
+            count++;
+        })
+        if(!count) {
+            return this.db.collection("authors").add({
+                uid: this.auth.currentUser.uid,
+                username: this.auth.currentUser.displayName
+            })
+        } else {
+            return true;
+        }
+    }
+
+    async getAuthors() {
+        const authors = await this.db.collection("authors").get()
+        return authors;
     }
 }
 
