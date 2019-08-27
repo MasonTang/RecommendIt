@@ -1,0 +1,7 @@
+.title{
+    flex-wrap:wrap;
+}
+
+.card.following .author-name {
+    background-color: lightyellow
+}

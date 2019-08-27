@@ -119,6 +119,66 @@ class Firebase {
         const authors = await this.db.collection("authors").get()
         return authors;
     }
+
+
+//Following Methods
+async getFollowings(){
+    //get all of the follwoings for the logged in user
+    const authors = [];
+    const followings = await this.db
+        .collection("followings")
+        .where("follower", "==", this.auth.currentUser.uid)
+        .get();
+
+    followings.forEach(val => {
+        authors.push(val.data().author)
+    });
+
+    return authors;
+}
+
+async countFollowings(author){
+    let count = 0;
+    const followings = await this.db.
+        collection("followings")
+        .where("author", "==", author)
+        .get();
+
+    followings.forEach(val => {
+        count++;
+    })
+
+    return count;
+}
+
+addFollowing(author){
+    if(!this.auth.currentUser){
+        return alert("Not authorized")
+    }
+
+    return this.db.collection("followings").add({
+        follower: this.auth.currentUser.uid,
+        author: author,
+        lookupkey: `${this.auth.currentUser.uid}_${author}`
+    })
+}
+
+async removeFollowing(author) {
+    const following = await this.db
+        .collection('followings')
+        .where("lookupkey", "==", `${this.auth.currentUser.uid}_${author}`)
+        .get()
+
+    let docID
+
+    following.forEach(val => docID = val.id)
+
+    return this.db
+        .collection("followings")
+        .doc(docID)
+        .delete()
+}
+
 }
 
 

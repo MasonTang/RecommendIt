@@ -11,6 +11,7 @@ const Dashboard = (props) => {
   const [recommendation, setrecommendation] = useState("")
   const [loading, setloading] = useState(false)
   const [authors, setauthors] = useState({})
+  const [followings, setfollowings] = useState("")
 
   useEffect(() => {
     let tempAuthors = {}
@@ -30,6 +31,9 @@ const Dashboard = (props) => {
           })
         })
         setrecommendations(newReviews)
+        firebase.getFollowings().then(authors => {
+          setfollowings(authors)
+        })
         setloading(false)
       })
       firebase.addAuthor()
@@ -68,12 +72,16 @@ if (!firebase.getCurrentUsername()){
     <main>
       <Navbar {...props} />
       <div className="container">
-        <h2>Hello {firebase.getCurrentUsername()}</h2>
-        <h3>Current Recommendations ({recommendations.length}) </h3>
+        <h2>Hello {firebase.getCurrentUsername()}'s Dashboard - Welcome</h2>
 
         <div className="tile">
           {recommendations.map((recommendation,index) => (
-            <div key={index} className="card">
+            <div key={index} className= {
+              followings.includes(recommendation.data.category)
+              ? `card following $(recommendation.data.category)`
+              : `card ${recommendation.data.category}`
+            }
+          >
               <header className="card-header">
                 <p className="card-header-title">{recommendation.data.title}</p>
               </header>
@@ -98,7 +106,7 @@ if (!firebase.getCurrentUsername()){
                 {(firebase.auth.currentUser.uid == recommendation.data.author) ? (
                 <Link
                   to={`/editRecommendation/${recommendation.id}`}
-                  className="card-footer-item"
+                  className="card-footer-item author-name"
                 >
                   Edit
                 </Link>
